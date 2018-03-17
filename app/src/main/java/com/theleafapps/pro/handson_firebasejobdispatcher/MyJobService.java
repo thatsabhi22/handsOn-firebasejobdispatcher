@@ -22,24 +22,23 @@ public class MyJobService extends JobService {
      * We return false in this method only when the job is to short which can be run on main thread
      */
     @Override
-    public boolean onStartJob(JobParameters job) {
+    public boolean onStartJob(final JobParameters job) {
 
         backgroundTask = new BackgroundTask(){
             @Override
             protected void onPostExecute(String str) {
                 Toast.makeText(getApplicationContext(),
-                        "Message from Background Task - "+str, Toast.LENGTH_SHORT).show();
+                        "Message from Background Task - "+str, Toast.LENGTH_LONG).show();
+
+                //When the job is running on the separate thread, jobfinishied() method must be called
+                //otherwise the system assumes that the job is still running in the background,
+                //which means firebasejobdispatcher process always running in the background
+                //and it will cause the battery to drain fast, because there is a waste process running in the background
+                //When we are returning true from this method, we need to call jobfinished() method.
+                jobFinished(job,false);
 
             }
         };
-
-        //When the job is running on the separate thread, jobfinishied() method must be called
-        //otherwise the system assumes that the job is still running in the background,
-        //which means firebasejobdispatcher process always running in the background
-        //and it will cause the battery to drain fast, because there is a waste process running in the background
-        //When we are returning true from this method, we need to call jobfinished() method.
-        jobFinished(job,false);
-
         backgroundTask.execute();
 
         return true;
